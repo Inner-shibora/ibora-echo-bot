@@ -35,6 +35,10 @@ def keyword_presale(message):
 @bot.message_handler(func=lambda message: True)
 def echo_all(message):
     bot.reply_to(message, f"🟢 Echo: {message.text}")
+# ฟังก์ชันตอบทุกข้อความ (echo)
+@bot.message_handler(func=lambda message: True)
+def echo_all(message):
+    bot.reply_to(message, f"🟢 Echo: {message.text}")
 
 if __name__ == "__main__":
     bot.remove_webhook()
