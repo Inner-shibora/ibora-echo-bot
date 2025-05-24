@@ -24,3 +24,6 @@ if __name__ == "__main__":
     bot.remove_webhook()
     bot.set_webhook(url=f"https://ibora-echo-bot-production.up.railway.app/bot{API_TOKEN}")
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
+    @bot.message_handler(commands=['presale'])
+def send_presale(msg):
+    bot.send_message(msg.chat.id, "🚀 SHRA Token Presale is LIVE now! Visit https://shibora.ai/presale")
