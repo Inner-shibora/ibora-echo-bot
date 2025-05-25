@@ -2,12 +2,15 @@
 import os
 import telebot
 from flask import Flask, request
-import time
 import threading
+import openai
 
 API_TOKEN = os.getenv("TELEGRAM_TOKEN")
+OPENAI_KEY = os.getenv("OPENAI_API_KEY")
+
 bot = telebot.TeleBot(API_TOKEN)
 app = Flask(__name__)
+openai.api_key = OPENAI_KEY
 
 GROUP_ID = "@Sbiora_Ai"
 
@@ -33,38 +36,39 @@ def help_message(message):
 # --- Keyword-Based Replies ---
 @bot.message_handler(func=lambda message: "presale" in message.text.lower())
 def presale_info(message):
-    bot.send_message(
-        message.chat.id,
-        "🟣 SHRA Token Presale เปิดแล้ว!\n1 SHRA = 0.0025 USDC\nจำกัด $1,000 ต่อกระเป๋า\nดูเพิ่มเติม: https://shibora.ai/presale"
-    )
+    bot.send_message(message.chat.id, "SHRA Presale is now LIVE!\n1 SHRA = 0.0025 USDC\nLimit: $1,000 per wallet\nBuy here: https://shibora.ai/presale")
 
 @bot.message_handler(func=lambda message: "whitepaper" in message.text.lower())
 def whitepaper_info(message):
-    bot.send_message(
-        message.chat.id,
-        "📄 Whitepaper: เจาะลึกแนวคิดเบื้องหลัง SHRA\nอ่านเลยที่: https://shibora.ai/whitepaper"
-    )
-
-@bot.message_handler(func=lambda message: "wallet" in message.text.lower() or "contract" in message.text.lower())
-def wallet_info(message):
-    bot.send_message(
-        message.chat.id,
-        "🔐 Wallet: 4JteCwYkH48tM4LEFNYTigy6vYuQeTPNTPW6TwsSCC2C\nใช้สำหรับรับเหรียญ SHRA หลังโอน USDC"
-    )
+    bot.send_message(message.chat.id, "Read the whitepaper at: https://shibora.ai/whitepaper")
 
 @bot.message_handler(func=lambda message: "price" in message.text.lower())
 def price_info(message):
-    bot.send_message(
-        message.chat.id,
-        "💰 Presale Price: 1 SHRA = 0.0025 USDC\nPresale บน Solana กำลังดำเนินอยู่!"
-    )
+    bot.send_message(message.chat.id, "1 SHRA = 0.0025 USDC on Solana")
 
-# --- Default Echo ---
+@bot.message_handler(func=lambda message: "wallet" in message.text.lower() or "contract" in message.text.lower())
+def wallet_info(message):
+    bot.send_message(message.chat.id, "Presale Wallet (GM): 4JteCwYkH48tM4LEFNYTigy6vYuQeTPNTPW6TwsSCC2C")
+
+# --- Default Echo via GPT ---
 @bot.message_handler(func=lambda message: True)
-def echo_all(message):
-    bot.send_message(message.chat.id, f"Echo: {message.text}")
+def echo_gpt_response(message):
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[{"role": "user", "content": message.text}],
+            max_tokens=150
+        )
+        reply = response["choices"][0]["message"]["content"]
+        bot.send_message(message.chat.id, reply)
+    except Exception as e:
+        bot.send_message(message.chat.id, "ขออภัย เกิดข้อผิดพลาด.")
+        print("GPT ERROR:", e)
 
-# --- Start polling if run directly ---
+# --- Start Bot Thread ---
+def run_bot():
+    bot.polling(none_stop=True)
+
 if __name__ == "__main__":
-    bot.remove_webhook()
-    bot.polling()
+    threading.Thread(target=run_bot).start()
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
