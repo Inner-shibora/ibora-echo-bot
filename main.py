@@ -5,50 +5,47 @@ from flask import Flask, request
 import threading
 from openai import OpenAI
 
-# Load environment variables
+# โหลด API Key
 API_TOKEN = os.getenv("TELEGRAM_TOKEN")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-
-bot = telebot.TeleBot(API_TOKEN)
-app = Flask(__name__)
 client = OpenAI(api_key=OPENAI_API_KEY)
 
-# --- ตั้งค่า Webhook ---
+# สร้าง bot และ app
+bot = telebot.TeleBot(API_TOKEN)
+app = Flask(__name__)
+
+# ตั้งค่า Webhook
 bot.remove_webhook()
 bot.set_webhook(url=f"https://ibora-echo-bot-production.up.railway.app/bot/{API_TOKEN}")
 
-# --- Webhook สำหรับ Telegram ---
+# Webhook สำหรับ Telegram
 @app.route(f"/bot/{API_TOKEN}", methods=["POST"])
 def webhook():
     update = telebot.types.Update.de_json(request.stream.read().decode("utf-8"))
     bot.process_new_updates([update])
     return "OK", 200
 
-# --- Route ตรวจสอบระบบ ---
-@app.route("/")
-def index():
-    return "Echo bot is live!"
-
-# --- คำสั่งเริ่มต้น ---
+# ตอบ /start
 @bot.message_handler(commands=["start"])
-def greet_user(message):
-    bot.send_message(message.chat.id, "Welcome to Shibora AI. Echo is ready 🧠")
+def start_message(message):
+    bot.send_message(message.chat.id, "ยินดีต้อนรับสู่ Shibora AI!")
 
+# ตอบ /help
 @bot.message_handler(commands=["help"])
 def help_message(message):
-    bot.send_message(message.chat.id, "You can ask anything. Echo will answer.")
+    bot.send_message(message.chat.id, "คุณสามารถพิมพ์คำถามอะไรก็ได้ แล้ว Echo จะตอบกลับให้ครับ")
 
-# --- ราคาของ SHRA ---
+# ตอบข้อความ "price"
 @bot.message_handler(func=lambda msg: "price" in msg.text.lower())
 def price_info(message):
     bot.send_message(message.chat.id, "1 SHRA = 0.0025 USDC on Solana")
 
-# --- Wallet Presale ---
+# ตอบข้อความ "wallet" หรือ "contract"
 @bot.message_handler(func=lambda msg: "wallet" in msg.text.lower() or "contract" in msg.text.lower())
 def wallet_info(message):
-    bot.send_message(message.chat.id, "Presale Wallet (GM): 4JteCwYkH48tML4EMVFj6v6VUqeTPNiTG6wSSC2C")
+    bot.send_message(message.chat.id, "Presale Wallet (GM): 4JteCwYkH48tML4EMVFj6v6VUqeTPNiTG6wS5C2CzC")
 
-# --- GPT ตอบกลับ ---
+# เชื่อม GPT จริง
 @bot.message_handler(func=lambda msg: True)
 def echo_gpt_response(message):
     try:
@@ -63,10 +60,11 @@ def echo_gpt_response(message):
         bot.send_message(message.chat.id, f"ขออภัย เกิดข้อผิดพลาด: {e}")
         print("GPT ERROR:", e)
 
-# --- Thread สำหรับรัน Bot polling บน Railway ---
+# รัน bot ใน thread
 def run_bot():
     bot.polling(non_stop=True)
 
+# เริ่มรันแอป
 if __name__ == "__main__":
     threading.Thread(target=run_bot).start()
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
