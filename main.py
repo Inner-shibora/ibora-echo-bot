@@ -6,16 +6,17 @@ from flask import Flask, request
 API_TOKEN = os.getenv("TELEGRAM_TOKEN")
 bot = telebot.TeleBot(API_TOKEN)
 
-# Set up flask app
+# Set up Flask app
 app = Flask(__name__)
 
+# Webhook route
 @app.route(f"/bot{API_TOKEN}", methods=["POST"])
 def webhook():
     update = telebot.types.Update.de_json(request.stream.read().decode("utf-8"))
     bot.process_new_updates([update])
     return "OK", 200
 
-# Root route (optional check)
+# Optional root route
 @app.route("/")
 def index():
     return "Echo bot is live!"
@@ -35,7 +36,7 @@ def keyword_presale(message):
 
 @bot.message_handler(func=lambda message: "price" in message.text.lower())
 def price_info(message):
-    bot.send_message(message.chat.id, "📉 Please check the latest price and updates at our official site: https://shibora.ai")
+    bot.send_message(message.chat.id, "📊 Please check the latest price and updates at our official site: https://shibora.ai")
 
 @bot.message_handler(func=lambda message: "ping" in message.text.lower())
 def ping_reply(message):
@@ -49,3 +50,7 @@ def help_message(message):
 @bot.message_handler(func=lambda message: True)
 def echo_all(message):
     bot.reply_to(message, f"Echo: {message.text}")
+
+# --- Set webhook when app starts ---
+bot.remove_webhook()
+bot.set_webhook(url=f"https://ibora-echo-bot-production.up.railway.app/bot{API_TOKEN}")
