@@ -50,7 +50,7 @@ def help_message(message):
 @bot.message_handler(func=lambda message: True)
 def echo_all(message):
     bot.reply_to(message, f"Echo: {message.text}")
-bot.reply_to(message, f"Echo: {message.text}")
+
 
 # Required for gunicorn to find the app
 app = app
