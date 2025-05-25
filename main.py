@@ -51,6 +51,5 @@ def help_message(message):
 def echo_all(message):
     bot.reply_to(message, f"Echo: {message.text}")
 
-
 # Required for gunicorn to find the app
 app = app
