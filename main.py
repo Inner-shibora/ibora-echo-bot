@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
 import os
 import telebot
-from flask import Flask, request
+from openai import OpenAI
 import threading
 import openai
 
 # Load API keys from environment variables
-API_TOKEN = os.getenv("TELEGRAM_TOKEN")
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+- openai.api_key = os.getenv("OPENAI_API_KEY")
++ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
 
 bot = telebot.TeleBot(API_TOKEN)
 app = Flask(__name__)
@@ -52,7 +53,8 @@ def wallet_info(message):
 @bot.message_handler(func=lambda msg: True)
 def echo_gpt_response(message):
     try:
-        response = openai.chat.completions.create(
+        - response = openai.ChatCompletion.create(
+        + response = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[{"role": "user", "content": message.text}],
             max_tokens=150
