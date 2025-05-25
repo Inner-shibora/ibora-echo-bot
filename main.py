@@ -1,56 +1,50 @@
 import os
-import telebot
-from flask import Flask, request
-import threading
-import openai
+import logging
+from telegram import Update
+from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, MessageHandler, filters
+from openai import OpenAI
 
-API_TOKEN = os.getenv("TELEGRAM_TOKEN")
+# Logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# ENV
+TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
-bot = telebot.TeleBot(API_TOKEN)
-app = Flask(__name__)
+# OpenAI Client
+client = OpenAI(api_key=OPENAI_API_KEY)
 
-# ตั้งค่า OpenAI
-openai.api_key = OPENAI_API_KEY
+# Start command
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("👋 สวัสดี! ฉันคือ Echo AI จาก Shibora. ถามมาได้เลย!")
 
-# --- Webhook ---
-bot.remove_webhook()
-bot.set_webhook(url=f"https://ibora-echo-bot-production.up.railway.app/bot/{API_TOKEN}")
+# Message handler
+async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_message = update.message.text
+    user_name = update.effective_user.username
+    logger.info(f"Message from {user_name}: {user_message}")
 
-@app.route(f"/bot/{API_TOKEN}", methods=["POST"])
-def webhook():
-    update = telebot.types.Update.de_json(request.stream.read().decode("utf-8"))
-    bot.process_new_updates([update])
-    return "OK", 200
-
-@app.route("/")
-def index():
-    return "Echo bot is live!"
-
-# --- Message Handler ---
-@bot.message_handler(commands=["start"])
-def greet_user(message):
-    bot.send_message(message.chat.id, "Welcome to Shibora AI!")
-
-@bot.message_handler(func=lambda msg: True)
-def echo_gpt_response(message):
     try:
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=[{"role": "user", "content": message.text}],
-            max_tokens=150
+        response = await client.chat.completions.create(
+            model="gpt-3.5-turbo",  # เปลี่ยนเป็น "gpt-4" ได้ถ้าคุณมีสิทธิ์ใช้งาน
+            messages=[{"role": "user", "content": user_message}]
         )
-        reply = response.choices[0].message.content
-        bot.send_message(message.chat.id, reply)
+        reply = response.choices[0].message.content.strip()
+        await update.message.reply_text(reply)
+
     except Exception as e:
-        bot.send_message(message.chat.id, f"ขออภัย เกิดข้อผิดพลาด: {e}")
-        print("GPT ERROR:", e)
+        logger.error(f"OpenAI Error: {e}")
+        await update.message.reply_text("⚠️ ขอโทษครับ ตอนนี้ระบบ AI ยังไม่พร้อมใช้งาน ลองใหม่อีกครั้งเร็ว ๆ นี้นะครับ")
 
-# --- Thread สำหรับ Telegram Polling (ถ้าไม่ใช้ Webhook) ---
-def run_bot():
-    bot.polling(non_stop=True)
+# Main app
+def main():
+    app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
-# --- Main ---
+    logger.info("Bot is running...")
+    app.run_polling()
+
 if __name__ == "__main__":
-    threading.Thread(target=run_bot).start()
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
+    main()
