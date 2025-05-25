@@ -23,7 +23,6 @@ GROUP_ID = "@Sbiora_Ai"
 @app.route(f"/bot/{API_TOKEN}", methods=["POST"])
 def webhook():
     update = telebot.types.Update.de_json(request.stream.read().decode("utf-8"))
-    print("Received a message from Telegram:", update)
     bot.process_new_updates([update])
     return "OK", 200
 
