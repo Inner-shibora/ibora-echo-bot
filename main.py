@@ -13,6 +13,7 @@ app = Flask(__name__)
 openai.api_key = OPENAI_KEY
 
 # --- ตั้ง Webhook ---
+print("Setting webhook to:", f"https://ibora-echo-bot-production.up.railway.app/bot{API_TOKEN}")
 bot.remove_webhook()
 bot.set_webhook(url=f"https://ibora-echo-bot-production.up.railway.app/bot{API_TOKEN}")
 
@@ -22,8 +23,10 @@ GROUP_ID = "@Sbiora_Ai"
 @app.route(f"/bot{API_TOKEN}", methods=["POST"])
 def webhook():
     update = telebot.types.Update.de_json(request.stream.read().decode("utf-8"))
+    print("Received a message from Telegram:", update)
     bot.process_new_updates([update])
     return "OK", 200
+
 
 @app.route("/")
 def index():
@@ -54,17 +57,17 @@ def wallet_info(message):
 # --- เชื่อม GPT ---
 @bot.message_handler(func=lambda msg: True)
 def echo_gpt_response(message):
-    try:
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=[{"role": "user", "content": message.text}],
-            max_tokens=150
-        )
-        reply = response["choices"][0]["message"]["content"]
-        bot.send_message(message.chat.id, reply)
-    except Exception as e:
-        bot.send_message(message.chat.id, "ขออภัย เกิดข้อผิดพลาด.")
-        print("GPT ERROR:", e)
+try:
+    response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        messages=[{"role": "user", "content": message.text}]
+    )
+    reply = response.choices[0].message.content
+    bot.send_message(message.chat.id, reply)
+
+except Exception as e:
+    bot.send_message(message.chat.id, f"ขออภัย เกิดข้อผิดพลาด: {e}")
+    print("GPT ERROR:", e)
 
 # --- Run Bot Thread ---
 def run_bot():
