@@ -57,7 +57,7 @@ def wallet_info(message):
 # --- เชื่อม GPT ---
 @bot.message_handler(func=lambda msg: True)
 def echo_gpt_response(message):
-try:
+    try:
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
         messages=[{"role": "user", "content": message.text}]
@@ -65,7 +65,7 @@ try:
     reply = response.choices[0].message.content
     bot.send_message(message.chat.id, reply)
 
-except Exception as e:
+    except Exception as e:
     bot.send_message(message.chat.id, f"ขออภัย เกิดข้อผิดพลาด: {e}")
     print("GPT ERROR:", e)
 
