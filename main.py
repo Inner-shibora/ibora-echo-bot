@@ -73,7 +73,7 @@ def ai_dialogue_loop():
         bot.send_message(GROUP_ID, f"{sage}: {sage_msg}")
 
         index += 2
-        time.sleep(150)  # 15 minutes
+        time.sleep(600)  # 15 minutes
 
 # Start background thread
 threading.Thread(target=ai_dialogue_loop, daemon=True).start()
