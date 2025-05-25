@@ -16,29 +16,47 @@ def webhook():
 def index():
     return "Echo bot is live!"
 
-# ฟังก์ชัน presale มาก่อน
-@bot.message_handler(commands=['presale'])
+# Standard commands
+@bot.message_handler(commands=["start"])
+def greet_user(message):
+    bot.send_message(message.chat.id, "Hello! Welcome to Shibora AI. How can I assist you today?")
+
+@bot.message_handler(commands=["presale"])
 def announce_presale(message):
     bot.send_message(
         message.chat.id,
-        "🚀 SHRA Token Presale is LIVE now!\nVisit https://shibora.ai/presale to join before it's gone!"
+        "🚀 SHRA Token Presale is now LIVE! Join before it's gone: https://shibora.ai/presale"
     )
 
-@bot.message_handler(func=lambda message: 'presale' in message.text.lower())
+@bot.message_handler(func=lambda message: "presale" in message.text.lower())
 def keyword_presale(message):
     bot.send_message(
         message.chat.id,
-        "🔥 Looks like you're interested in the SHRA presale!\nCheck it out here: https://shibora.ai/presale"
+        "Looks like you're interested in the SHRA presale!\nCheck it out here: https://shibora.ai/presale"
     )
 
-# ฟังก์ชัน echo มาทีหลังสุด
+@bot.message_handler(func=lambda message: "price" in message.text.lower())
+def price_info(message):
+    bot.send_message(
+        message.chat.id,
+        "Please check the latest price and updates at our official site: https://shibora.ai"
+    )
+
+@bot.message_handler(func=lambda message: "ping" in message.text.lower())
+def ping_reply(message):
+    bot.send_message(message.chat.id, "Echo: pong!")
+
+@bot.message_handler(commands=["help"])
+def help_message(message):
+    bot.send_message(
+        message.chat.id,
+        "You can ask about presale, price, or type /start to begin."
+    )
+
+# Default echo for any message
 @bot.message_handler(func=lambda message: True)
 def echo_all(message):
-    bot.reply_to(message, f"🟢 Echo: {message.text}")
-# ฟังก์ชันตอบทุกข้อความ (echo)
-@bot.message_handler(func=lambda message: True)
-def echo_all(message):
-    bot.reply_to(message, f"🟢 Echo: {message.text}")
+    bot.reply_to(message, f"Echo: {message.text}")
 
 if __name__ == "__main__":
     bot.remove_webhook()
