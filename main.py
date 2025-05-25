@@ -12,6 +12,11 @@ bot = telebot.TeleBot(API_TOKEN)
 app = Flask(__name__)
 openai.api_key = OPENAI_KEY
 
+# ตั้ง Webhook สำหรับ Telegram
+bot.remove_webhook()
+bot.set_webhook(url=f"https://ibora-echo-bot-production.up.railway.app/bot{API_TOKEN}")
+
+
 GROUP_ID = "@Sbiora_Ai"
 
 @app.route(f"/bot/{API_TOKEN}", methods=["POST"])
