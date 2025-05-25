@@ -1,18 +1,17 @@
 # -*- coding: utf-8 -*-
 import os
 import telebot
-from openai import OpenAI
+from flask import Flask, request
 import threading
-import openai
+from openai import OpenAI
 
-# Load API keys from environment variables
-- openai.api_key = os.getenv("OPENAI_API_KEY")
-+ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-
+# Load environment variables
+API_TOKEN = os.getenv("TELEGRAM_TOKEN")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 bot = telebot.TeleBot(API_TOKEN)
 app = Flask(__name__)
-openai.api_key = OPENAI_API_KEY
+client = OpenAI(api_key=OPENAI_API_KEY)
 
 # --- ตั้งค่า Webhook ---
 bot.remove_webhook()
@@ -25,7 +24,7 @@ def webhook():
     bot.process_new_updates([update])
     return "OK", 200
 
-# --- หน้าหลัก ---
+# --- Route ตรวจสอบระบบ ---
 @app.route("/")
 def index():
     return "Echo bot is live!"
@@ -33,13 +32,13 @@ def index():
 # --- คำสั่งเริ่มต้น ---
 @bot.message_handler(commands=["start"])
 def greet_user(message):
-    bot.send_message(message.chat.id, "Welcome to Shibora AI. Echo & Sage are here to think with you.")
+    bot.send_message(message.chat.id, "Welcome to Shibora AI. Echo is ready 🧠")
 
 @bot.message_handler(commands=["help"])
 def help_message(message):
-    bot.send_message(message.chat.id, "You can ask anything. Echo will answer you.")
+    bot.send_message(message.chat.id, "You can ask anything. Echo will answer.")
 
-# --- ราคา SHRA ---
+# --- ราคาของ SHRA ---
 @bot.message_handler(func=lambda msg: "price" in msg.text.lower())
 def price_info(message):
     bot.send_message(message.chat.id, "1 SHRA = 0.0025 USDC on Solana")
@@ -47,14 +46,13 @@ def price_info(message):
 # --- Wallet Presale ---
 @bot.message_handler(func=lambda msg: "wallet" in msg.text.lower() or "contract" in msg.text.lower())
 def wallet_info(message):
-    bot.send_message(message.chat.id, "Presale Wallet (GM): 4JteCwYkH48tML4EMVFj6v6VUqeTPNiTg6ws5C2CC")
+    bot.send_message(message.chat.id, "Presale Wallet (GM): 4JteCwYkH48tML4EMVFj6v6VUqeTPNiTG6wSSC2C")
 
 # --- GPT ตอบกลับ ---
 @bot.message_handler(func=lambda msg: True)
 def echo_gpt_response(message):
     try:
-        - response = openai.ChatCompletion.create(
-        + response = client.chat.completions.create(
+        response = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[{"role": "user", "content": message.text}],
             max_tokens=150
@@ -65,7 +63,7 @@ def echo_gpt_response(message):
         bot.send_message(message.chat.id, f"ขออภัย เกิดข้อผิดพลาด: {e}")
         print("GPT ERROR:", e)
 
-# --- Thread Bot ---
+# --- Thread สำหรับรัน Bot polling บน Railway ---
 def run_bot():
     bot.polling(non_stop=True)
 
