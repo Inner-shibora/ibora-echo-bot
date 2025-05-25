@@ -5,15 +5,16 @@ from flask import Flask, request
 import threading
 from openai import OpenAI
 
-# โหลด API Key จาก Environment
+# ดึง API Key จาก Environment
 API_TOKEN = os.getenv("TELEGRAM_TOKEN")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
+# สร้าง bot และ client
 bot = telebot.TeleBot(API_TOKEN)
 app = Flask(__name__)
 client = OpenAI(api_key=OPENAI_API_KEY)
 
-# --- ตั้งค่า Webhook ---
+# ตั้งค่า Webhook
 bot.remove_webhook()
 bot.set_webhook(url=f"https://ibora-echo-bot-production.up.railway.app/bot/{API_TOKEN}")
 
@@ -24,20 +25,19 @@ def webhook():
     bot.process_new_updates([update])
     return "OK", 200
 
-# --- Root Route (เช็คสถานะ) ---
+# --- Root route สำหรับทดสอบ ---
 @app.route("/")
 def index():
     return "Echo bot is live!"
 
-# --- คำสั่ง Start ---
+# --- เริ่มต้นคำสั่ง ---
 @bot.message_handler(commands=["start"])
 def greet_user(message):
     bot.send_message(message.chat.id, "Welcome to Shibora AI. Echo & Sage are here to think with you.")
 
-# --- คำสั่ง Help ---
 @bot.message_handler(commands=["help"])
 def help_message(message):
-    bot.send_message(message.chat.id, "You can ask anything. Echo will answer you.")
+    bot.send_message(message.chat.id, "You can ask anything. Echo will answer you wisely.")
 
 # --- ราคา SHRA ---
 @bot.message_handler(func=lambda msg: "price" in msg.text.lower())
@@ -53,9 +53,7 @@ def wallet_info(message):
 @bot.message_handler(func=lambda msg: True)
 def echo_gpt_response(message):
     try:
-        import openai
-            openai.api_key = os.getenv("OPENAI_API_KEY")
-            response = client.chat.completions.create(
+        response = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[{"role": "user", "content": message.text}],
             max_tokens=150
