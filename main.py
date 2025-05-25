@@ -16,7 +16,7 @@ def webhook():
     bot.process_new_updates([update])
     return "OK", 200
 
-# Optional root route
+# Root route (optional check)
 @app.route("/")
 def index():
     return "Echo bot is live!"
@@ -28,7 +28,7 @@ def greet_user(message):
 
 @bot.message_handler(commands=["presale"])
 def announce_presale(message):
-    bot.send_message(message.chat.id, "🚀 SHRA Token Presale is now LIVE! Join before it's gone: https://shibora.ai/presale")
+    bot.send_message(message.chat.id, "🚀 SHRA Token Presale is now LIVE! Join before it’s gone: https://shibora.ai/presale")
 
 @bot.message_handler(func=lambda message: "presale" in message.text.lower())
 def keyword_presale(message):
@@ -50,7 +50,3 @@ def help_message(message):
 @bot.message_handler(func=lambda message: True)
 def echo_all(message):
     bot.reply_to(message, f"Echo: {message.text}")
-
-# --- Set webhook when app starts ---
-bot.remove_webhook()
-bot.set_webhook(url=f"https://ibora-echo-bot-production.up.railway.app/bot{API_TOKEN}")
