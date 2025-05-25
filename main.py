@@ -53,7 +53,9 @@ def wallet_info(message):
 @bot.message_handler(func=lambda msg: True)
 def echo_gpt_response(message):
     try:
-        response = client.chat.completions.create(
+        import openai
+            openai.api_key = os.getenv("OPENAI_API_KEY")
+            response = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[{"role": "user", "content": message.text}],
             max_tokens=150
